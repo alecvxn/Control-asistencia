@@ -1,11 +1,151 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+<meta charset="UTF-8">
+<title>Sistema de Asistencia</title>
+
+<style>
+body { font-family: Arial; background:#f4f4f4; padding:20px; }
+
+.seccion {
+    background:white;
+    padding:15px;
+    margin-bottom:20px;
+    border-radius:10px;
+}
+
+table {
+    width:100%;
+    border-collapse: collapse;
+    margin-top:10px;
+}
+
+th, td {
+    border:1px solid #ccc;
+    padding:8px;
+    text-align:left;
+}
+
+button {
+    margin:2px;
+    padding:5px 10px;
+}
+</style>
+
 </head>
 <body>
-    
+
+<h1>Sistema de Asistencia</h1>
+
+<!-- ESTUDIANTES -->
+<div class="seccion">
+    <h2>Estudiantes</h2>
+
+    <input id="nombreEst" placeholder="Nombre">
+    <input id="emailEst" placeholder="Email">
+    <button onclick="crearEstudiante()">Agregar</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tablaEstudiantes"></tbody>
+    </table>
+</div>
+
+<!-- PROFESORES -->
+<div class="seccion">
+    <h2>Profesores</h2>
+
+    <input id="nombreProf" placeholder="Nombre">
+    <button onclick="crearProfesor()">Agregar</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tablaProfesores"></tbody>
+    </table>
+</div>
+
+<!-- MATERIAS -->
+<div class="seccion">
+    <h2>Materias</h2>
+
+    <input id="nombreMat" placeholder="Nombre">
+    <input id="profMat" placeholder="ID Profesor">
+    <button onclick="crearMateria()">Agregar</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>ID Profesor</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tablaMaterias"></tbody>
+    </table>
+</div>
+
+<div class="seccion">
+    <h2>Clases</h2>
+
+    <input id="materiaClase" placeholder="ID Materia">
+    <input id="fechaClase" type="date">
+    <button onclick="crearClase()">Agregar</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>ID Materia</th>
+                <th>Fecha</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tablaClases"></tbody>
+    </table>
+</div>
+
+<div class="seccion">
+    <h2>Asistencias</h2>
+
+    <input id="estAsis" placeholder="ID Estudiante">
+    <input id="claseAsis" placeholder="ID Clase">
+    <select id="presenteAsis">
+        <option value="presente">Presente</option>
+        <option value="ausente">Ausente</option>
+        <option value="tardia">Tardía</option>
+    </select>
+
+    <button onclick="crearAsistencia()">Agregar</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Estudiante</th>
+                <th>Clase</th>
+                <th>Presente</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tablaAsistencias"></tbody>
+    </table>
+</div>
+
+<script src="app.js"></script>
+
 </body>
 </html>

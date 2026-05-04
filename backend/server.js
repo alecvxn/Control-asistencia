@@ -68,6 +68,27 @@ app.delete('/estudiantes/:id', async (req, res) => {
     }
 });
 
+// PUT: Actualizar un estudiante
+app.put('/estudiantes/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre, email } = req.body;
+
+        const result = await pool.query(
+            'UPDATE estudiantes SET nombre = $1, email = $2 WHERE id = $3 RETURNING *',
+            [nombre, email, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ mensaje: "Estudiante no encontrado" });
+        }
+
+        res.json({ mensaje: "Estudiante actualizado", estudiante: result.rows[0] });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // --- ENTIDAD: MATERIAS ---
 
 // GET: Obtener todas las materias
@@ -109,128 +130,94 @@ app.listen(3000, () => {
     console.log("Servidor corriendo en http://localhost:3000");
 });
 
+// PROFESORES
+app.get('/profesores', async (req, res) => {
+    const result = await pool.query('SELECT * FROM profesores');
+    res.json(result.rows);
+});
 
+app.post('/profesores', async (req, res) => {
+    const { nombre } = req.body;
+    const result = await pool.query(
+        'INSERT INTO profesores (nombre) VALUES ($1) RETURNING *',
+        [nombre]
+    );
+    res.json(result.rows[0]);
+});
 
+app.put('/profesores/:id', async (req, res) => {
+    const { id } = req.params;
+    const { nombre } = req.body;
 
-// Paso 4
-require('dotenv').config(); // Carga de variables de entorno desde .env 
-const express = require('express');
-const { Pool } = require('pg');
-const cors = require('cors');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+    const result = await pool.query(
+        'UPDATE profesores SET nombre=$1 WHERE id=$2 RETURNING *',
+        [nombre, id]
+    );
 
-const app = express(); 
-app.use(express.json()); 
-app.use(cors());
+    res.json(result.rows[0]);
+});
 
-
-// Paso 5
-const pool = new Pool({
-    user: process.env.DB_USER, 
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD, 
-    port: process.env.DB_PORT
+app.delete('/profesores/:id', async (req, res) => {
+    const { id } = req.params;
+    await pool.query('DELETE FROM profesores WHERE id=$1', [id]);
+    res.json({ mensaje: "Profesor eliminado" });
 });
 
 
-// Paso 6
-const verificarToken = (req, res, next) => {
-    // Extracción del token del encabezado Authorization 
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+// ================= CLASES =================
 
-    if (!token) {
-    return res.status(401).json({ error: "Acceso denegado. Se requiere token de seguridad." });
-    }
+// GET
+app.get('/clases', async (req, res) => {
+    const result = await pool.query('SELECT * FROM clases');
+    res.json(result.rows);
+});
 
+// POST
+app.post('/clases', async (req, res) => {
+    const { id_materia, fecha } = req.body;
+
+    const result = await pool.query(
+        'INSERT INTO clases (id_materia, fecha) VALUES ($1, $2) RETURNING *',
+        [id_materia, fecha]
+    );
+
+    res.json(result.rows[0]);
+});
+
+// DELETE
+app.delete('/clases/:id', async (req, res) => {
+    const { id } = req.params;
+    await pool.query('DELETE FROM clases WHERE id=$1', [id]);
+    res.json({ mensaje: "Clase eliminada" });
+});
+
+// ================= ASISTENCIAS =================
+
+// GET
+app.get('/asistencias', async (req, res) => {
+    const result = await pool.query('SELECT * FROM asistencias');
+    res.json(result.rows);
+});
+
+// POST
+app.post('/asistencias', async (req, res) => {
     try {
-        // Validación del token con la firma secreta
-        const verificado = jwt.verify(token, process.env.JWT_SECRET); 
-        req.user = verificado;
-        next(); // Autoriza el paso al siguiente controlador
-    } catch (error) {
-     res.status(403).json({ error: "Token inválido o expirado." });
-    }
-};
-
-
-// Paso 7
-app.post('/auth/registrar', async (req, res) => { 
-    try {
-        const { email, password } = req.body;
-
-        // Generación de hash para evitar guardar contraseñas en texto plano 
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        const { id_estudiante, id_clase, estado } = req.body;
 
         const result = await pool.query(
-         'INSERT INTO api_users (email, password) VALUES ($1, $2) RETURNING id, email, creation_date',
-         [email, hashedPassword]
+            'INSERT INTO asistencias (id_estudiante, id_clase, estado) VALUES ($1, $2, $3) RETURNING *',
+            [id_estudiante, id_clase, estado]
         );
 
-        res.status(201).json({
-            mensaje: 'Usuario registrado exitosamente', 
-            usuario: result.rows[0]
-        });
-    } catch (error) {
-        res.status(500).json({ error: "Error al registrar: " + error.message });
-    }
-});
-
-
-// Paso 8
-app.post('/auth/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const result = await pool.query('SELECT * FROM api_users WHERE email = $1', [email]);
- 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: "Credenciales incorrectas." });
-        }
-        const usuario = result.rows[0];
-        // Comparación segura del password enviado vs el hash almacenado
-        const esValida = await bcrypt.compare(password, usuario.password);
- 
-        if (!esValida) {
-            return res.status(401).json({ error: "Credenciales incorrectas." });
-        }
-        // Creación del token con tiempo de expiración de 2 horas
-        const token = jwt.sign({ id: usuario.id }, process.env.JWT_SECRET, { expiresIn: '2h' });
-        res.json({ token });
+        res.json(result.rows[0]);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-
-//Paso 9
-// Ruta pública: No requiere token
-app.get('/tareas', async (req, res) => {
-    try {
-        const result = await pool.query('SELECT * FROM tareas');
-        res.json(result.rows);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-// Ruta protegida: Se añade el middleware verificarToken como segundo parámetro
-app.post('/tareas', verificarToken, async (req, res) => {
-    try {
-        const { titulo, finalizada } = req.body;
-        const result = await pool.query(
-            'INSERT INTO tareas (titulo, finalizada) VALUES ($1, $2) RETURNING *', [titulo, finalizada]
-        );
-        res.status(201).json({ mensaje: 'Tarea creada', tarea: result.rows[0] });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-
-//Paso 10
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Servidor seguro funcionando en: http://localhost:${PORT}`);
+// DELETE
+app.delete('/asistencias/:id', async (req, res) => {
+    const { id } = req.params;
+    await pool.query('DELETE FROM asistencias WHERE id=$1', [id]);
+    res.json({ mensaje: "Asistencia eliminada" });
 });
